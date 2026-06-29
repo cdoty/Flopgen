@@ -26,9 +26,13 @@ using namespace std;
 
 struct Options {
   string output_filename;
+  string bootsector_filename;
+  string label;
   vector<string> filenames;
   FloppySize floppy_size;
   int code_page;
+  bool nosort;
+  bool onedisk;
 };
 
 inline bool compare_file_sizes(File *f1, File *f2) {
@@ -38,12 +42,15 @@ inline bool compare_file_sizes(File *f1, File *f2) {
 bool get_filenames(vector<string> &result, istream *input);
 bool run(Options &options);
 
+
 int main(int argc, char** argv) {
   CLI::App app
     {(string)"Flopgen " + VERSION + ": a tool for automatic creation of "
      "IMG floppy disk images"};
 
   Options options;
+
+  options.nosort	= false;
 
   auto output_opt = app.add_option("-o,--output", options.output_filename,
                                    "Set base output filename without .img. All images will be of form (name)1.img, (name)2.img etc.");
@@ -59,8 +66,17 @@ int main(int argc, char** argv) {
   size_opt->check(CLI::IsMember({360, 720, 1200, 1440, 2880}));
 
   string input;
-  auto input_opt = app.add_option("-i,--input", input,\
+  auto input_opt = app.add_option("-i,--input", input,
                                   "Set filename of input list of files separated by a new line (use - for stdin)");
+  
+  app.add_option("-b,--bootsector", options.bootsector_filename, "Set filename of bootsector (if not set no boot sector is written)");
+
+  app.add_option("-l,--label", options.label, "Set disk label (if not set it will default to NO NAME)");
+
+  app.add_flag("-n,--nosort", options.nosort, "Do not sort files");
+  
+  options.onedisk	= false;
+  app.add_flag("-1,--1disk", options.onedisk, "Only create one disk.");
 
   vector<string> filenames;
   auto filenames_opt = app.add_option("FILES/DIRS", filenames,
@@ -161,7 +177,10 @@ bool run(Options &options) {
     return false;
   }
 
-  sort(files.begin(), files.end(), compare_file_sizes);
+  if (false == options.nosort)
+  {
+	sort(files.begin(), files.end(), compare_file_sizes);
+  }
 
   Floppy *current_floppy = new Floppy(options.floppy_size, options.code_page);
 
@@ -186,9 +205,16 @@ bool run(Options &options) {
       continue;
     }
 
-    if (!current_floppy->add_file(file)) {
-      if (!current_floppy->save(options.output_filename + to_string(count++)
-                                + ".img")) {
+      if (!current_floppy->add_file(file)) {
+      
+      std::string	output_filename	= options.output_filename;
+
+      if (false == options.onedisk)
+      {
+        output_filename	+= to_string(count++);
+      }
+
+	  if (!current_floppy->save(output_filename + ".img", options.bootsector_filename, options.label)) {
         cerr << "Could not produce a floppy image number " << count - 1
              << " due to an error, aborting." << endl;
         
@@ -244,8 +270,14 @@ bool run(Options &options) {
     return false;
   }
   
-  bool result = current_floppy->save(options.output_filename + to_string(count)
-                                     + ".img");
+  std::string	output_filename	= options.output_filename;
+
+  if (false == options.onedisk)
+  {
+    output_filename	+= to_string(count++);
+  }
+
+  bool result = current_floppy->save(output_filename + ".img", options.bootsector_filename, options.label);
 
   delete current_floppy;
 

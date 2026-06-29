@@ -30,7 +30,7 @@ private:
   bool add_file(File *file_object, bool path_with_dirs=true);
   bool add_directory(Directory *dir);
 public:
-  Image(std::string filename, FloppySize size, int code_page);
+  Image(std::string filename, FloppySize size, int code_page, std::string bootSector, std::string label);
   ~Image();
   bool is_open();
   bool operator<<(File *file_object);

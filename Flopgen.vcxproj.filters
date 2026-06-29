@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="fatfs">
+      <UniqueIdentifier>{e982b10b-69f9-4f12-aa77-e1bd556ca925}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cli">
+      <UniqueIdentifier>{90c9b5cf-34c2-42d2-bda8-e008090c2cfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cli\Header Files">
+      <UniqueIdentifier>{e0aeec3e-01f0-4be6-9eca-c68a2832e25c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fatfs\Header Files">
+      <UniqueIdentifier>{a25fb2e3-800f-42c7-bcb4-bfa6f4243080}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fatfs\Source Files">
+      <UniqueIdentifier>{6f73275f-5ce6-4394-bf4e-9a0991c4e3e1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="classes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="filediskio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fatfs\diskio.c">
+      <Filter>fatfs\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fatfs\fattime.c">
+      <Filter>fatfs\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fatfs\ff.c">
+      <Filter>fatfs\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fatfs\ffsystem.c">
+      <Filter>fatfs\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fatfs\ffunicode.c">
+      <Filter>fatfs\Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="classes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="filediskio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cli\CLI11.hpp">
+      <Filter>cli\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fatfs\diskio.h">
+      <Filter>fatfs\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fatfs\ff.h">
+      <Filter>fatfs\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fatfs\ffconf.h">
+      <Filter>fatfs\Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

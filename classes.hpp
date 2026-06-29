@@ -76,7 +76,7 @@ public:
   bool fit_capacity(File *file);
   bool add_file(File *file);
   int get_size();
-  bool save(std::string filename);
+  bool save(std::string filename, std::string bootsector, std::string label);
 };
 
 #endif

@@ -210,8 +210,8 @@ int Floppy::get_size() {
   return size * BYTES_IN_KB;
 }
 
-bool Floppy::save(string filename) {
-  Image image(filename, size, code_page);
+bool Floppy::save(string filename, string bootsector, string label) {
+  Image image(filename, size, code_page, bootsector, label);
 
   if (!image.is_open()) {
     return false;

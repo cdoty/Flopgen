@@ -30,6 +30,21 @@
 *.a
 *.lib
 
+# Build files
+*.pdb
+*.idb
+*.ipdb
+*.iobj
+*.sdf
+*.suo
+*.vcxproj.user
+
+# Intermediate directories
+/Debug
+/Release
+/Environment
+/.vs
+
 # Executables
 *.exe
 *.out

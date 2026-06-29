@@ -21,6 +21,10 @@
 #ifndef _FILEDISKIO_H
 #define _FILEDISKIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "fatfs/ff.h"
 #include "fatfs/diskio.h"
 #include <stdbool.h>
@@ -33,5 +37,9 @@ DSTATUS file_disk_initialize();
 DRESULT file_disk_read(BYTE *buff, LBA_t sector, UINT count);
 DRESULT file_disk_write(const BYTE *buff, LBA_t sector, UINT count);
 DRESULT file_disk_ioctl(BYTE cmd, void *buff);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

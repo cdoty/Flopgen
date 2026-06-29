@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.37327.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Flopgen", "Flopgen.vcxproj", "{EAF78DCF-D086-4DBB-8C90-90A5D9E9DB7D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EAF78DCF-D086-4DBB-8C90-90A5D9E9DB7D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EAF78DCF-D086-4DBB-8C90-90A5D9E9DB7D}.Debug|Win32.Build.0 = Debug|Win32
+		{EAF78DCF-D086-4DBB-8C90-90A5D9E9DB7D}.Release|Win32.ActiveCfg = Release|Win32
+		{EAF78DCF-D086-4DBB-8C90-90A5D9E9DB7D}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5E217855-E136-4E1D-8F56-6B07B91A750E}
+	EndGlobalSection
+EndGlobal

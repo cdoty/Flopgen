@@ -21,7 +21,7 @@
 
 using namespace std;
 
-Image::Image(string filename, FloppySize size, int code_page) {
+Image::Image(string filename, FloppySize size, int code_page, std::string bootSector, std::string label) {
   file_disk_setup(filename.c_str(), size * BYTES_IN_KB);
 
   FRESULT res = f_setcp(code_page);
@@ -76,7 +76,7 @@ Image::Image(string filename, FloppySize size, int code_page) {
 
   BYTE buf[FF_MAX_SS];
 
-  res = f_mkfs("", &options, buf, sizeof(buf));
+  res = f_mkfs("", &options, buf, sizeof(buf), bootSector.c_str(), label.c_str());
 
   if (res != 0) {
     goto error;

@@ -22,6 +22,9 @@
 /----------------------------------------------------------------------------*/
 
 
+#include <stdio.h>
+#include <stdbool.h>
+
 #include "ff.h"			/* Declarations of FatFs API */
 #include "diskio.h"		/* Declarations of device I/O functions */
 
@@ -109,7 +112,7 @@
 #define BS_NTres			37		/* WindowsNT error flag (BYTE) */
 #define BS_BootSig			38		/* Extended boot signature (BYTE) */
 #define BS_VolID			39		/* Volume serial number (DWORD) */
-#define BS_VolLab			43		/* Volume label string (8-byte) */
+#define BS_VolLab			43		/* Volume label string (11-byte) */
 #define BS_FilSysType		54		/* Filesystem type string (8-byte) */
 #define BS_BootCode			62		/* Boot code (448-byte) */
 #define BS_55AA				510		/* Signature word (WORD) */
@@ -3305,7 +3308,7 @@ static UINT check_fs (	/* 0:FAT VBR, 1:exFAT VBR, 2:Valid BS but not FAT, 3:Inva
 
 	if (FF_FS_EXFAT && !mem_cmp(fs->win + BS_JmpBoot, "\xEB\x76\x90" "EXFAT   ", 11)) return 1;	/* Check if exFAT VBR */
 
-	if (fs->win[BS_JmpBoot] == 0xE9 || fs->win[BS_JmpBoot] == 0xEB || fs->win[BS_JmpBoot] == 0xE8) {	/* Valid JumpBoot code? */
+	if (fs->win[BS_JmpBoot] == 0xC3 || fs->win[BS_JmpBoot] == 0xE9 || fs->win[BS_JmpBoot] == 0xEB || fs->win[BS_JmpBoot] == 0xE8) {	/* Valid JumpBoot code? */
 		if (!mem_cmp(fs->win + BS_FilSysType, "FAT", 3)) return 0;		/* Is it an FAT VBR? */
 		if (!mem_cmp(fs->win + BS_FilSysType32, "FAT32", 5)) return 0;	/* Is it an FAT32 VBR? */
 	}
@@ -5833,10 +5836,12 @@ static FRESULT create_partition (
 
 
 FRESULT f_mkfs (
-	const TCHAR* path,		/* Logical drive number */
-	const MKFS_PARM* opt,	/* Format options */
-	void* work,				/* Pointer to working buffer (null: use heap memory) */
-	UINT len				/* Size of working buffer [byte] */
+	const TCHAR* path,			/* Logical drive number */
+	const MKFS_PARM* opt,		/* Format options */
+	void* work,					/* Pointer to working buffer (null: use heap memory) */
+	UINT len,					/* Size of working buffer [byte] */
+	const TCHAR* bootsector,	/* Boot sector filename */
+	const TCHAR* label			/* Disk label */
 )
 {
 	static const WORD cst[] = {1, 4, 16, 64, 256, 512, 0};	/* Cluster size boundary for FAT volume (4Ks unit) */
@@ -6211,38 +6216,106 @@ FRESULT f_mkfs (
 #endif
 		/* Create FAT VBR */
 		mem_set(buf, 0, ss);
-		mem_cpy(buf + BS_JmpBoot, "\xEB\xFE\x90" "MSDOS5.0", 11);/* Boot jump code (x86), OEM name */
-		st_word(buf + BPB_BytsPerSec, ss);				/* Sector size [byte] */
-		buf[BPB_SecPerClus] = (BYTE)pau;				/* Cluster size [sector] */
-		st_word(buf + BPB_RsvdSecCnt, (WORD)sz_rsv);	/* Size of reserved area */
-		buf[BPB_NumFATs] = (BYTE)n_fat;					/* Number of FATs */
-		st_word(buf + BPB_RootEntCnt, (WORD)((fsty == FS_FAT32) ? 0 : n_root));	/* Number of root directory entries */
-		if (sz_vol < 0x10000) {
-			st_word(buf + BPB_TotSec16, (WORD)sz_vol);	/* Volume size in 16-bit LBA */
-		} else {
-			st_dword(buf + BPB_TotSec32, (DWORD)sz_vol);	/* Volume size in 32-bit LBA */
+
+		bool	loadedBootSector	= false;
+		UINT8*	buffer				= malloc(512);
+
+		if (buffer != NULL && buffer != NULL && strlen(bootsector) > 0)
+		{
+			mem_set(buffer, 0, 512);
+
+			FILE*	handle;
+
+			handle	= fopen(bootsector, "rb");
+
+			if (handle != NULL)
+			{
+				fseek(handle, 0, SEEK_END);
+
+				int	length	= ftell(handle);
+
+				if (512 == length)
+				{
+					rewind(handle);
+
+					if (512 == fread(buffer, 1, 512, handle))
+					{
+						loadedBootSector	= true;
+					}
+				}
+				
+				fclose(handle);
+			}
 		}
-		buf[BPB_Media] = opt->mdt;							/* Media descriptor byte */
-		st_word(buf + BPB_SecPerTrk, opt->sec_per_track);				/* Number of sectors per track (for int13) */
-		st_word(buf + BPB_NumHeads, opt->n_heads);				/* Number of heads (for int13) */
-		st_dword(buf + BPB_HiddSec, (DWORD)b_vol);		/* Volume offset in the physical drive [sector] */
-		if (fsty == FS_FAT32) {
-			st_dword(buf + BS_VolID32, GET_FATTIME());	/* VSN */
-			st_dword(buf + BPB_FATSz32, sz_fat);		/* FAT size [sector] */
-			st_dword(buf + BPB_RootClus32, 2);			/* Root directory cluster # (2) */
-			st_word(buf + BPB_FSInfo32, 1);				/* Offset of FSINFO sector (VBR + 1) */
-			st_word(buf + BPB_BkBootSec32, 6);			/* Offset of backup VBR (VBR + 6) */
-			buf[BS_DrvNum32] = opt->d_num;					/* Drive number (for int13) */
-			buf[BS_BootSig32] = 0x29;					/* Extended boot signature */
-			mem_cpy(buf + BS_VolLab32, "NO NAME    " "FAT32   ", 19);	/* Volume label, FAT signature */
-		} else {
-			st_dword(buf + BS_VolID, GET_FATTIME());	/* VSN */
-			st_word(buf + BPB_FATSz16, (WORD)sz_fat);	/* FAT size [sector] */
-			buf[BS_DrvNum] = opt->d_num;						/* Drive number (for int13) */
-			buf[BS_BootSig] = 0x29;						/* Extended boot signature */
-			mem_cpy(buf + BS_VolLab, "NO NAME    " "FAT     ", 19);	/* Volume label, FAT signature */
+
+		if (true == loadedBootSector && buffer != NULL)
+		{
+			mem_cpy(buf, buffer, 512);
 		}
-		st_word(buf + BS_55AA, 0xAA55);					/* Signature (offset is fixed here regardless of sector size) */
+
+		else
+		{
+			TCHAR	diskLabel[12];
+
+			int	labellength	= strlen(label);
+
+			if (0 == labellength)
+			{
+				strcpy(diskLabel, "NO NAME    ");
+			}
+
+			else
+			{
+				strcpy_s(diskLabel, 11, label);
+
+				for (int loop = labellength; loop < 11; ++loop)
+				{
+					diskLabel[loop]	= 0x20;
+				}
+			}
+
+			mem_cpy(buf + BS_JmpBoot, "\xEB\xFE\x90" "MSDOS5.0", 11);/* Boot jump code (x86), OEM name */
+			st_word(buf + BPB_BytsPerSec, ss);				/* Sector size [byte] */
+			buf[BPB_SecPerClus] = (BYTE)pau;				/* Cluster size [sector] */
+			st_word(buf + BPB_RsvdSecCnt, (WORD)sz_rsv);	/* Size of reserved area */
+			buf[BPB_NumFATs] = (BYTE)n_fat;					/* Number of FATs */
+			st_word(buf + BPB_RootEntCnt, (WORD)((fsty == FS_FAT32) ? 0 : n_root));	/* Number of root directory entries */
+			if (sz_vol < 0x10000) {
+				st_word(buf + BPB_TotSec16, (WORD)sz_vol);	/* Volume size in 16-bit LBA */
+			} else {
+				st_dword(buf + BPB_TotSec32, (DWORD)sz_vol);	/* Volume size in 32-bit LBA */
+			}
+			buf[BPB_Media] = opt->mdt;							/* Media descriptor byte */
+			st_word(buf + BPB_SecPerTrk, opt->sec_per_track);				/* Number of sectors per track (for int13) */
+			st_word(buf + BPB_NumHeads, opt->n_heads);				/* Number of heads (for int13) */
+			st_dword(buf + BPB_HiddSec, (DWORD)b_vol);		/* Volume offset in the physical drive [sector] */
+			if (fsty == FS_FAT32) {
+				st_dword(buf + BS_VolID32, GET_FATTIME());	/* VSN */
+				st_dword(buf + BPB_FATSz32, sz_fat);		/* FAT size [sector] */
+				st_dword(buf + BPB_RootClus32, 2);			/* Root directory cluster # (2) */
+				st_word(buf + BPB_FSInfo32, 1);				/* Offset of FSINFO sector (VBR + 1) */
+				st_word(buf + BPB_BkBootSec32, 6);			/* Offset of backup VBR (VBR + 6) */
+				buf[BS_DrvNum32] = opt->d_num;					/* Drive number (for int13) */
+				buf[BS_BootSig32] = 0x29;					/* Extended boot signature */
+				
+				mem_cpy(buf + BS_VolLab32, diskLabel, 11);	/* Volume label, FAT signature */
+				mem_cpy(buf + BS_VolLab32 + 11, "FAT32   ", 9);	/* Volume label, FAT signature */
+			} else {
+				st_dword(buf + BS_VolID, GET_FATTIME());	/* VSN */
+				st_word(buf + BPB_FATSz16, (WORD)sz_fat);	/* FAT size [sector] */
+				buf[BS_DrvNum] = opt->d_num;						/* Drive number (for int13) */
+				buf[BS_BootSig] = 0x29;						/* Extended boot signature */
+				mem_cpy(buf + BS_VolLab, diskLabel, 11);	/* Volume label, FAT signature */
+				mem_cpy(buf + BS_VolLab + 11, "FAT     ", 9);	/* Volume label, FAT signature */
+			}
+			st_word(buf + BS_55AA, 0xAA55);					/* Signature (offset is fixed here regardless of sector size) */
+		}
+
+		if (buffer != NULL)
+		{
+			free(buffer);
+		}
+
 		if (disk_write(pdrv, buf, b_vol, 1) != RES_OK) LEAVE_MKFS(FR_DISK_ERR);	/* Write it to the VBR sector */
 
 		/* Create FSINFO record if needed */
